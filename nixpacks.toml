@@ -25,4 +25,5 @@ cmds = [
 ]
 
 [start]
-cmd = "./boot.sh"
+cmd = "bash boot.sh"
+
