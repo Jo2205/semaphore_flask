@@ -1,1 +1,1 @@
-web: ./boot.sh
+web: python app.py
