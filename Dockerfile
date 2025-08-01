@@ -1,24 +1,28 @@
-# Gunakan image Python yang ringan
+# Gunakan base image Python yang lebih ramping
 FROM python:3.9-slim
 
-# Install dependency Linux untuk OpenCV
+# Set direktori kerja di dalam container
+WORKDIR /app
+
+# ---- LANGKAH KRUSIAL: Instal dependensi sistem untuk OpenCV & MediaPipe ----
 RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \
     libglib2.0-0 \
+    --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /app
-
-# Salin requirements.txt dan install
+# Salin file requirements terlebih dahulu untuk memanfaatkan caching Docker
 COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Salin seluruh file project
+# Instal paket Python
+RUN pip install --no-cache-dir --upgrade pip
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Salin sisa kode aplikasi Anda
 COPY . .
 
-# Expose port yang digunakan Flask
-EXPOSE 8080
+# Beri tahu Hugging Face port mana yang digunakan aplikasi
+EXPOSE 7860
 
-# Jalankan app dengan gunicorn
-CMD ["gunicorn", "-w", "1", "-b", "0.0.0.0:8080", "app:app"]
+# Perintah untuk menjalankan aplikasi menggunakan Gunicorn
+CMD ["gunicorn", "--worker-tmp-dir", "/dev/shm", "-w", "1", "-b", "0.0.0.0:7860", "app:app"]
