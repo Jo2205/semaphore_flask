@@ -9,6 +9,7 @@ import mediapipe as mp
 from io import BytesIO
 from PIL import Image
 import logging
+import os
 
 # Inisialisasi logging
 logging.basicConfig(level=logging.INFO)
@@ -107,4 +108,4 @@ def predict():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True, threaded=True)  # Threaded untuk mendukung multiple requests
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
