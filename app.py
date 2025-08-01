@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 
 # Inisialisasi Flask
 app = Flask(__name__)
-CORS(app)  # Allow cross-origin untuk frontend React di localhost:3000
+CORS(app)  # Allow cross-origin untuk frontend React/Vercel
 
 # Load model dan label
 try:
-    model = load_model("cnn_baru.h5")
+    model = load_model("model_tf_format")  # <- Load dari folder SavedModel
     label_map = np.load("label_baru.npy", allow_pickle=True)
     logger.info("✅ Model dan label classes berhasil dimuat")
 except Exception as e:
@@ -40,10 +40,10 @@ def preprocess_image(image_b64):
         img = Image.open(BytesIO(img_bytes)).convert('RGB')
         img_np = np.array(img)
 
-        # Konversi ke format yang kompatibel dengan MediaPipe (BGR)
+        # Konversi ke format BGR untuk OpenCV
         img_bgr = cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR)
 
-        # Proses gambar dengan MediaPipe Pose
+        # Deteksi pose dengan MediaPipe
         results = pose.process(img_bgr)
         if not results.pose_landmarks:
             logger.warning("⚠️ Tidak ada pose yang terdeteksi")
@@ -54,7 +54,6 @@ def preprocess_image(image_b64):
         for landmark in results.pose_landmarks.landmark:
             keypoints.extend([landmark.x, landmark.y, landmark.z, landmark.visibility])
 
-        # Pastikan panjang keypoints adalah 132
         if len(keypoints) != 132:
             logger.error(f"❌ Jumlah keypoints tidak valid: {len(keypoints)}")
             return None
@@ -76,13 +75,11 @@ def predict():
         image_b64 = data.get("image")
 
         if keypoints is not None:
-            # Proses input keypoints langsung
             if len(keypoints) != 132:
                 logger.error("❌ Keypoints tidak valid, harus 132 elemen")
                 return jsonify({"error": "Keypoints tidak valid (harus 132 elemen)"}), 400
             input_data = np.array(keypoints).reshape(1, 132, 1)
         elif image_b64 is not None:
-            # Proses gambar untuk ekstraksi keypoints
             keypoints = preprocess_image(image_b64)
             if keypoints is None:
                 return jsonify({"error": "Gagal mengekstrak keypoints dari gambar"}), 400
@@ -91,7 +88,7 @@ def predict():
             logger.error("❌ Data tidak valid, harus ada keypoints atau image")
             return jsonify({"error": "Data tidak valid, harus ada keypoints atau image"}), 400
 
-        # Lakukan prediksi
+        # Prediksi kelas
         probs = model.predict(input_data, verbose=0)
         pred_index = np.argmax(probs)
         confidence = float(probs[0][pred_index])
@@ -107,5 +104,6 @@ def predict():
         logger.error(f"❌ Error saat prediksi: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+# Jalankan server Flask di Railway
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
