@@ -1,0 +1,21 @@
+[project]
+name = "my-flask-tf-project"
+version = "0.1.0"
+description = "Flask API with TensorFlow and OpenCV"
+requires-python = ">=3.12"
+
+dependencies = [
+    "Flask==2.2.5",
+    "flask-cors==3.0.10",
+    "numpy>=1.26.4",                    # Kompatibel dengan Python 3.12
+    "mediapipe==0.10.20",               # Ini support 3.12
+    "pillow>=10.3.0",
+    "tensorflow==2.19.0",               # 2.19.0 support 3.12
+    "keras==3.5.0",                     # sesuai dengan requirement TF 2.19.0
+    "opencv-python-headless==4.5.5.64",
+    "gunicorn==20.1.0"
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
